@@ -4,16 +4,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.media.AudioManager;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
-import java.lang.reflect.Field;
-import java.util.Random;
 
 import android.annotation.SuppressLint;
 
@@ -27,12 +22,7 @@ public class MainActivity extends AppCompatActivity {
     SeekBar mSeekBarTime;
     static MediaPlayer mMediaPlayer;
     private AudioManager mAudioManager;
-
-    Field[] fields = R.raw.class.getFields();
-    Random rand = new Random();
-    int n = fields.length, currentIndex = rand.nextInt(n);
-    ArrayList<Integer> prevIndex = new ArrayList<>();
-
+    int currentIndex = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,14 +37,9 @@ public class MainActivity extends AppCompatActivity {
         mSeekBarTime = findViewById(R.id.mSeekBarTime);
 
         final ArrayList<Integer> songs = new ArrayList<>();
-
-        for(int i = 0; i < n; i++){
-            try {
-                songs.add(fields[i].getInt(fields[i]));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
+        songs.add(R.raw.file_example);
+        songs.add(R.raw.piano);
+        songs.add(R.raw.success);
 
         mMediaPlayer = MediaPlayer.create(getApplicationContext(),
                 songs.get(currentIndex));
@@ -75,17 +60,10 @@ public class MainActivity extends AppCompatActivity {
             if (mMediaPlayer != null) {
                 play.setImageResource(R.drawable.pause);
             }
-            prevIndex.add(currentIndex);
-            int temp = rand.nextInt(3);
-            if (currentIndex != temp) {
-                currentIndex = temp;
-
+            if (currentIndex < songs.size() - 1) {
+                currentIndex++;
             } else {
-                if (currentIndex == n-1) {
-                    currentIndex = 0;
-                } else {
-                    currentIndex++;
-                }
+                currentIndex = 0;
             }
             if (mMediaPlayer.isPlaying()) {
                 mMediaPlayer.stop();
@@ -99,13 +77,10 @@ public class MainActivity extends AppCompatActivity {
             if (mMediaPlayer != null) {
                 play.setImageResource(R.drawable.pause);
             }
-            if (prevIndex.isEmpty()) {
-                currentIndex = rand.nextInt(n);
-            }
-            if (!prevIndex.isEmpty()) {
-                int last = prevIndex.size() - 1;
-                currentIndex = prevIndex.get(last);
-                prevIndex.remove(last);
+            if (currentIndex > 0) {
+                currentIndex--;
+            } else {
+                currentIndex = songs.size() - 1;
             }
             if (mMediaPlayer.isPlaying()) {
                 mMediaPlayer.stop();
@@ -118,29 +93,17 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     private void songNames() {
-        try {
-            int temp = fields[currentIndex].getInt(fields[currentIndex]);
-            Uri mediaPath = Uri.parse("android.resource://" + getPackageName() + "/" + temp);
-            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-            mmr.setDataSource(this, mediaPath);
-            String sponsorTitle = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-            String sponsorArtist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-            songTitle.setText(sponsorTitle +" - "+ sponsorArtist);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-
         if (currentIndex == 0) {
+            songTitle.setText("Impact moderato - Kevin Macleod");
             imageView.setImageResource(R.drawable.impact_moderato);
         }
         if (currentIndex == 1) {
+            songTitle.setText("Whispering - Fils");
             imageView.setImageResource(R.drawable.whispering);
         }
         if (currentIndex == 2) {
+            songTitle.setText("Success - AShamaluves ");
             imageView.setImageResource(R.drawable.success);
-        }
-        if (currentIndex >= n) {
-            imageView.setImageResource(R.drawable.music_note);
         }
 
         mMediaPlayer.setOnPreparedListener(mp -> {
